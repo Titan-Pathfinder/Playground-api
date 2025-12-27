@@ -16,7 +16,7 @@ cd /var/www/titan-playground
 # Pull latest changes (if using git)
 if [ -d ".git" ]; then
   echo "📥 Pulling latest changes from git..."
-  git pull
+  git pull origin master
 else
   echo "ℹ️  Not a git repository, skipping pull"
 fi

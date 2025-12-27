@@ -45,12 +45,11 @@ echo "📁 Creating application directory..."
 sudo mkdir -p /var/www/titan-playground
 sudo chown -R $USER:$USER /var/www/titan-playground
 
-# Clone repository (you'll need to update this with your repo URL)
-echo "📥 Cloning repository..."
-echo "⚠️  NOTE: Update the git clone command with your actual repository URL"
-echo "    For now, you'll need to manually clone or upload your code to /var/www/titan-playground"
-# cd /var/www/titan-playground
-# git clone YOUR_REPO_URL .
+# Clone repository
+echo "📥 Cloning repository from GitHub..."
+cd /var/www/titan-playground
+git clone -b master https://github.com/Titan-Pathfinder/Playground-api.git .
+echo "✅ Repository cloned successfully"
 
 echo ""
 echo "✅ EC2 setup complete!"
