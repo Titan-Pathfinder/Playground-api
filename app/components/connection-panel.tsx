@@ -7,12 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
-import { Loader2, CheckCircle2, XCircle, Circle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Circle, X } from "lucide-react";
 import type { ConnectionState, ClientMode } from "@/lib/titan/native-types";
 
 const WS_ENDPOINTS = [
-  { value: "wss://v1.api.titan.ag", label: "Production - v1.api.titan.ag", group: "Production" },
-  { value: "wss://v1.api.titan.ag+zstd", label: "Production - v1.api.titan.ag+zstd", group: "Production" },
   { value: "wss://fra.api.titan-sol.tech/api/v1/ws", label: "DEV1 - Frankfurt", group: "Development" },
   { value: "wss://api.epimetheus.infra.titan-sol.tech/api/v1/ws", label: "DEV2 - Epimetheus", group: "Development" },
   { value: "custom", label: "Custom WebSocket URL", group: "Custom" },
@@ -31,6 +29,7 @@ export function ConnectionPanel({ connectionState, serverInfo, clientMode, onCli
   const [jwt, setJwt] = useState("");
   const [wsUrl, setWsUrl] = useState(WS_ENDPOINTS[0].value);
   const [customWsUrl, setCustomWsUrl] = useState("");
+  const [showSecurityWarning, setShowSecurityWarning] = useState(true);
 
   const handleConnect = async () => {
     const actualWsUrl = wsUrl === "custom" ? customWsUrl : wsUrl;
@@ -115,14 +114,28 @@ export function ConnectionPanel({ connectionState, serverInfo, clientMode, onCli
           <Input
             id="jwt"
             type="password"
-            placeholder="Enter your Titan JWT (optional)"
+            placeholder="Enter your Titan JWT"
             value={jwt}
             onChange={(e) => setJwt(e.target.value)}
             disabled={connectionState.status === "connected"}
           />
-          <p className="text-xs text-muted-foreground">
-            Your Titan API authentication token (optional for some endpoints)
-          </p>
+          {showSecurityWarning && (
+            <div className="relative rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 p-3 pr-8 space-y-1">
+              <button
+                onClick={() => setShowSecurityWarning(false)}
+                className="absolute top-2 right-2 text-amber-700 dark:text-amber-500 hover:text-amber-900 dark:hover:text-amber-300 transition-colors"
+                aria-label="Dismiss warning"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <p className="text-xs font-semibold text-amber-900 dark:text-amber-500">
+                Playground & Starter Code Only
+              </p>
+              <p className="text-xs text-amber-800 dark:text-amber-600">
+                This is for testing and learning purposes. <strong>NEVER expose your API key in production code.</strong> Always hide your API key behind a secure backend proxy.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -132,14 +145,6 @@ export function ConnectionPanel({ connectionState, serverInfo, clientMode, onCli
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Production</SelectLabel>
-                {WS_ENDPOINTS.filter(e => e.group === "Production").map((endpoint) => (
-                  <SelectItem key={endpoint.value} value={endpoint.value}>
-                    {endpoint.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
               <SelectGroup>
                 <SelectLabel>Development</SelectLabel>
                 {WS_ENDPOINTS.filter(e => e.group === "Development").map((endpoint) => (

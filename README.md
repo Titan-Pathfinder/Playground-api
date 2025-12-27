@@ -31,6 +31,15 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to start using the playground.
 
+## Security Warning
+
+**This is playground and starter code for testing and learning purposes only.**
+
+- **NEVER expose your API key in production client-side code**
+- **ALWAYS hide your API key behind a secure backend proxy**
+- This playground allows direct JWT token entry for convenience during development
+- In production applications, implement proper authentication flow with server-side token management
+
 ## Usage Guide
 
 ### 1. Connect to Titan API
