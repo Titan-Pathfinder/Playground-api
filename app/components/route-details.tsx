@@ -48,10 +48,9 @@ export function RouteDetails({ route, routeIndex }: RouteDetailsProps) {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="hops">Hops</TabsTrigger>
-            <TabsTrigger value="fees">Fees</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -99,34 +98,6 @@ export function RouteDetails({ route, routeIndex }: RouteDetailsProps) {
                     <div className="text-muted-foreground">Liquidity OK</div>
                     <div>{market.notEnoughLiquidity ? "❌" : "✅"}</div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </TabsContent>
-
-          <TabsContent value="fees" className="space-y-3">
-            {route.marketInfos?.map((market: any, idx: number) => (
-              <div key={idx} className="p-3 rounded-lg border bg-muted/50">
-                <div className="mb-2">
-                  <Badge variant="outline">Hop {idx + 1}: {market.label}</Badge>
-                </div>
-                <div className="space-y-2 text-sm">
-                  {market.lpFee && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">LP Fee</span>
-                      <span className="font-mono">
-                        {formatAmount(market.lpFee.amount, 6)} ({market.lpFee.pct.toFixed(4)}%)
-                      </span>
-                    </div>
-                  )}
-                  {market.platformFee && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Platform Fee</span>
-                      <span className="font-mono">
-                        {formatAmount(market.platformFee.amount, 6)} ({market.platformFee.pct.toFixed(4)}%)
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
             ))}

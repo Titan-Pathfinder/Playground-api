@@ -11,8 +11,52 @@ import type {
 } from "./native-types";
 
 /**
+ * =============================================================================
+ * TITAN API NATIVE WEBSOCKET CLIENT
+ * =============================================================================
+ *
+ * This is a reference implementation showing how to connect to Titan's WebSocket API
+ * without using the official SDK. Use this as a guide for implementing in other languages.
+ *
+ * KEY CONCEPTS:
+ *
+ * 1. PROTOCOL NEGOTIATION:
+ *    - Pass compression protocols during WebSocket handshake
+ *    - Server selects the best one it supports (zstd > brotli > gzip > none)
+ *
+ * 2. MESSAGE FORMAT:
+ *    - All messages are MessagePack encoded (NOT JSON!)
+ *    - Request:  { id: number, data: { MethodName: params } }
+ *    - Response: { requestId: number, data: { MethodName: result }, stream?: {...} }
+ *    - Error:    { requestId: number, message: string }
+ *
+ * 3. COMPRESSION:
+ *    - Both request and response payloads are compressed if protocol selected
+ *    - Compress AFTER MessagePack encoding
+ *    - Decompress BEFORE MessagePack decoding
+ *
+ * 4. STREAMING:
+ *    - Streams use separate StreamData and StreamEnd messages
+ *    - StreamData: { id: number, seq: number, payload: { DataType: data } }
+ *    - StreamEnd: { id: number, errorCode?: number, errorMessage?: string }
+ *
+ * 5. AUTHENTICATION:
+ *    - JWT token passed as query parameter: ?auth=<token>
+ *    - Token is optional for some public endpoints
+ *
+ * =============================================================================
+ */
+
+/**
  * WebSocket subprotocols supported by Titan API
- * The server will select one during handshake
+ *
+ * IMPORTANT: "v1.api.titan.ag" is the SUB-PROTOCOL IDENTIFIER, NOT an endpoint URL!
+ * - Pass these strings during WebSocket connection to enable compression
+ * - The server will select one during handshake based on what it supports
+ * - Check ws.protocol to see which compression was chosen
+ *
+ * DO NOT confuse this with the actual endpoint URL (e.g., wss://fra.api.titan-sol.tech/api/v1/ws)
+ * The endpoint URL is provided to you by Titan separately.
  */
 const WEBSOCKET_SUBPROTO_BASE = "v1.api.titan.ag";
 const WEBSOCKET_SUBPROTOCOLS = [
@@ -267,8 +311,44 @@ export class NativeTitanClient implements TitanClient {
   /**
    * Send a request and wait for response
    *
-   * Format: { id: number, data: { MethodName: params } }
-   * NOT JSON-RPC!
+   * IMPLEMENTATION GUIDE:
+   * ====================
+   *
+   * 1. Create request object:
+   *    { id: number, data: { MethodName: params } }
+   *    Note: This is NOT JSON-RPC format! The method name is a key in the data object.
+   *
+   * 2. Encode with MessagePack:
+   *    IMPORTANT: Configure encoder with useBigInt64: true for Solana u64/i64 values
+   *
+   * 3. Compress (if protocol selected):
+   *    - zstd, brotli, or gzip depending on negotiated protocol
+   *    - Skip this step if protocol is base without compression
+   *
+   * 4. Send binary data via WebSocket:
+   *    ws.send(compressed_data)
+   *
+   * 5. Wait for response with matching requestId:
+   *    { requestId: number, data: { MethodName: result } }
+   *    OR error: { requestId: number, message: string }
+   *
+   * Example in other languages:
+   *
+   * Python:
+   *   import msgpack
+   *   import websocket
+   *
+   *   request = {"id": 1, "data": {"GetInfo": {}}}
+   *   encoded = msgpack.packb(request)
+   *   ws.send(encoded)
+   *
+   * Rust:
+   *   use rmp_serde;
+   *   use serde_json::json;
+   *
+   *   let request = json!({"id": 1, "data": {"GetInfo": {}}});
+   *   let encoded = rmp_serde::to_vec(&request)?;
+   *   ws.send(encoded)?;
    */
   private async sendRequest<T>(method: string, params?: any): Promise<T> {
     if (this.ws.readyState !== WebSocket.OPEN) {
@@ -395,14 +475,19 @@ export class NativeTitanClient implements TitanClient {
 /**
  * Create and connect to Titan WebSocket API using native client
  *
- * @param jwt - JWT authentication token (optional)
- * @param wsUrl - WebSocket URL (without query params)
+ * IMPORTANT: Do NOT use "wss://v1.api.titan.ag" as the endpoint!
+ * - "v1.api.titan.ag" is only the sub-protocol identifier
+ * - Use the actual endpoint URL provided to you by Titan
+ * - Example: "wss://fra.api.titan-sol.tech/api/v1/ws"
+ *
+ * @param jwt - JWT authentication token
+ * @param wsUrl - WebSocket endpoint URL (provided by Titan, NOT titan.ag domain)
  * @param onConnectionLost - Callback when connection is lost unexpectedly
  * @returns Promise that resolves to connected NativeTitanClient
  */
 export async function createNativeTitanClient(
   jwt: string,
-  wsUrl: string = "wss://v1.api.titan.ag",
+  wsUrl: string,
   onConnectionLost?: () => void
 ): Promise<NativeTitanClient> {
   // Add JWT as query parameter for authentication if provided
