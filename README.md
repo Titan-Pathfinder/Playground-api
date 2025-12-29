@@ -8,7 +8,7 @@ A real-time WebSocket playground for exploring the Titan Swap Quote API. Stream 
 
 **Live Demo**: [http://13.49.102.179](http://13.49.102.179)
 
-[View Demo Video](./demo.mov)
+**Demo Video**: [Watch on Loom](https://www.loom.com/share/3a129b1c830440f29954792693f57b60)
 
 ## Features
 
