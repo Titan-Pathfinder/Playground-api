@@ -6,6 +6,8 @@ A real-time WebSocket playground for exploring the Titan Swap Quote API. Stream 
 
 ## Demo
 
+**Live Demo**: [http://13.49.102.179](http://13.49.102.179)
+
 ![Titan Playground Demo](./demo.gif)
 
 ## Features
