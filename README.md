@@ -8,7 +8,7 @@ A real-time WebSocket playground for exploring the Titan Swap Quote API. Stream 
 
 **Live Demo**: [http://13.49.102.179](http://13.49.102.179)
 
-![Titan Playground Demo](./demo.gif)
+[View Demo Video](./demo.mov)
 
 ## Features
 
