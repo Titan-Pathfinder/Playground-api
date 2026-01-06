@@ -13,6 +13,9 @@ import type { ConnectionState, ClientMode } from "@/lib/titan/native-types";
 const WS_ENDPOINTS = [
   { value: "wss://fra.api.titan-sol.tech/api/v1/ws", label: "DEV1 - Frankfurt", group: "Development" },
   { value: "wss://api.epimetheus.infra.titan-sol.tech/api/v1/ws", label: "DEV2 - Epimetheus", group: "Development" },
+  { value: "wss://us1.api.demo.titan.exchange/api/v1/ws", label: "US1 - Ohio, USA", group: "Demo" },
+  { value: "wss://jp1.api.demo.titan.exchange/api/v1/ws", label: "JP1 - Tokyo, Japan", group: "Demo" },
+  { value: "wss://de1.api.demo.titan.exchange/api/v1/ws", label: "DE1 - Frankfurt, Germany", group: "Demo" },
   { value: "custom", label: "Custom WebSocket URL", group: "Custom" },
 ];
 
@@ -145,6 +148,14 @@ export function ConnectionPanel({ connectionState, serverInfo, clientMode, onCli
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Demo</SelectLabel>
+                {WS_ENDPOINTS.filter(e => e.group === "Demo").map((endpoint) => (
+                  <SelectItem key={endpoint.value} value={endpoint.value}>
+                    {endpoint.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
               <SelectGroup>
                 <SelectLabel>Development</SelectLabel>
                 {WS_ENDPOINTS.filter(e => e.group === "Development").map((endpoint) => (
