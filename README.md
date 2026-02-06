@@ -22,7 +22,6 @@ A real-time WebSocket playground for exploring the Titan Swap Quote API. Stream 
 ### Prerequisites
 
 - Node.js 20 or higher (Node.js 24 LTS recommended)
-- Titan API JWT token (get yours from [Titan Dashboard](https://titan.ag))
 
 ### Installation
 
