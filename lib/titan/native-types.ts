@@ -64,7 +64,7 @@ export interface TransactionParams {
 
 export interface QuoteUpdateParams {
   intervalMs?: number;
-  num_quotes?: number; // Note: snake_case as per API
+  numQuotes?: number;
 }
 
 export interface SwapQuoteRequest {

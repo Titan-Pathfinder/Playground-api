@@ -8,15 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { COMMON_MINTS, getTokenInfo, uiAmountToRaw } from "@/lib/constants/mints";
 import { Copy, Check, Upload } from "lucide-react";
-import type { SwapMode } from "@/lib/titan/native-types";
-
 export interface SwapFormParams {
   inputMint: string;
   outputMint: string;
   amount: number;
   userPublicKey: string;
   slippageBps: number;
-  swapMode: SwapMode;
   onlyDirectRoutes: boolean;
   intervalMs: number;
   numQuotes: number;
@@ -59,7 +56,6 @@ export function SwapForm({ onRequestChange, disabled }: SwapFormProps) {
       amount: rawAmount,
       userPublicKey,
       slippageBps: parseInt(slippageBps),
-      swapMode: "ExactIn", // Always use ExactIn mode
       onlyDirectRoutes,
       intervalMs: parseInt(intervalMs),
       numQuotes: parseInt(numQuotes),
@@ -193,6 +189,7 @@ export function SwapForm({ onRequestChange, disabled }: SwapFormProps) {
                 <SelectItem value={COMMON_MINTS.BONK}>BONK</SelectItem>
                 <SelectItem value={COMMON_MINTS.JUP}>JUP</SelectItem>
                 <SelectItem value={COMMON_MINTS.WIF}>WIF</SelectItem>
+                <SelectItem value={COMMON_MINTS.ONYC}>ONyc</SelectItem>
                 <SelectItem value="custom">Custom Token</SelectItem>
               </SelectContent>
             </Select>
@@ -243,6 +240,7 @@ export function SwapForm({ onRequestChange, disabled }: SwapFormProps) {
                 <SelectItem value={COMMON_MINTS.BONK}>BONK</SelectItem>
                 <SelectItem value={COMMON_MINTS.JUP}>JUP</SelectItem>
                 <SelectItem value={COMMON_MINTS.WIF}>WIF</SelectItem>
+                <SelectItem value={COMMON_MINTS.ONYC}>ONyc</SelectItem>
                 <SelectItem value="custom">Custom Token</SelectItem>
               </SelectContent>
             </Select>

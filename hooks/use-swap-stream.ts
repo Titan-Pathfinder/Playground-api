@@ -103,6 +103,32 @@ export function useSwapStream(client: TitanClient | null) {
               // value is SwapQuotes - contains quotes object keyed by provider name
               addLog({ type: "stream_data", data: value });
 
+              // DEBUG: Check if transaction field exists in any quote
+              if (value.quotes && typeof value.quotes === 'object') {
+                Object.entries(value.quotes).forEach(([provider, quote]: [string, any]) => {
+                  const debugInfo = {
+                    provider,
+                    hasTransaction: quote.transaction !== undefined,
+                    transactionValue: quote.transaction,
+                    hasInstructions: quote.instructions !== undefined,
+                    instructionsCount: quote.instructions?.length,
+                    hasAddressLookupTables: quote.addressLookupTables !== undefined,
+                    addressLookupTablesCount: quote.addressLookupTables?.length,
+                    allQuoteKeys: Object.keys(quote),
+                  };
+
+                  console.log(`[DEBUG] Provider: ${provider}`);
+                  console.log(`[DEBUG] Has transaction field: ${quote.transaction !== undefined}`);
+                  console.log(`[DEBUG] Transaction value:`, quote.transaction);
+                  console.log(`[DEBUG] Has instructions: ${quote.instructions !== undefined} (length: ${quote.instructions?.length})`);
+                  console.log(`[DEBUG] Has addressLookupTables: ${quote.addressLookupTables !== undefined} (length: ${quote.addressLookupTables?.length})`);
+                  console.log(`[DEBUG] Quote keys:`, Object.keys(quote));
+
+                  // Also add to UI logs
+                  addLog({ type: "stream_data", data: { DEBUG_TRANSACTION_CHECK: debugInfo } });
+                });
+              }
+
               // Transform quotes object to routes array
               let routes: any[] = [];
               if (value.quotes && typeof value.quotes === 'object') {

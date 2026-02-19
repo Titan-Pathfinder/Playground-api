@@ -23,7 +23,6 @@ export default function PlaygroundPage() {
     amount: 1000000000,
     userPublicKey: "GjphYQvBcDacc51fJFwk5Hf4X9JwN7SXpqw8vXfJk9gL",
     slippageBps: 50,
-    swapMode: "ExactIn",
     onlyDirectRoutes: false,
     intervalMs: 1000,
     numQuotes: 3,
