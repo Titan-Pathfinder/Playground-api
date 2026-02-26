@@ -136,16 +136,42 @@ export interface SwapQuotes {
 }
 
 // ============================================================================
+// Venue & Provider Types
+// ============================================================================
+
+export interface Venue {
+  name: string;
+  programId?: string;
+  label?: string;
+}
+
+export interface Provider {
+  name: string;
+  description?: string;
+}
+
+export interface GetVenuesResponse {
+  venues: Venue[];
+}
+
+export interface ListProvidersResponse {
+  providers: Provider[];
+}
+
+// ============================================================================
 // Client Interface
 // ============================================================================
 
 export interface TitanClient {
   getInfo(): Promise<ServerInfo>;
+  getVenues(): Promise<GetVenuesResponse>;
+  listProviders(): Promise<ListProvidersResponse>;
   newSwapQuoteStream(request: SwapQuoteRequest): Promise<{
     response: SwapQuoteStreamResponse;
     stream: ReadableStream<SwapQuotes>;
   }>;
   stopStream(streamId: number): Promise<void>;
+  sendRawRequest(method: string, params?: any): Promise<any>;
   close(): Promise<void>;
 }
 

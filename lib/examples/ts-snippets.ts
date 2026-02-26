@@ -1,9 +1,6 @@
 import type { SwapQuoteRequest } from "@/lib/titan/native-types";
 import bs58 from "bs58";
 
-/**
- * Serialize Uint8Array to base58 string for display
- */
 function serializeRequest(request: SwapQuoteRequest) {
   const encodeUint8Array = (arr: any): string => {
     if (arr instanceof Uint8Array) {
@@ -16,31 +13,64 @@ function serializeRequest(request: SwapQuoteRequest) {
     inputMint: encodeUint8Array(request.swap.inputMint),
     outputMint: encodeUint8Array(request.swap.outputMint),
     amount: request.swap.amount,
-    swapMode: request.swap.swapMode,
-    slippageBps: request.swap.slippageBps,
-    onlyDirectRoutes: request.swap.onlyDirectRoutes,
+    swapMode: request.swap.swapMode || "ExactIn",
+    slippageBps: request.swap.slippageBps ?? 50,
+    onlyDirectRoutes: request.swap.onlyDirectRoutes || false,
+    dexes: request.swap.dexes,
+    excludeDexes: request.swap.excludeDexes,
     userPublicKey: encodeUint8Array(request.transaction.userPublicKey),
     intervalMs: request.update?.intervalMs,
-    numQuotes: request.update?.num_quotes,
+    numQuotes: request.update?.numQuotes,
   };
 }
 
-/**
- * Generate TypeScript code snippet for the given swap configuration
- */
 export function generateTypeScriptSnippet(
   jwt: string,
   wsUrl: string,
-  request: SwapQuoteRequest
+  request: SwapQuoteRequest,
+  options?: { minimal?: boolean; native?: boolean }
 ): string {
   const params = serializeRequest(request);
+  const dexLine = params.dexes?.length
+    ? `\n        dexes: ${JSON.stringify(params.dexes)},`
+    : "";
+  const excludeLine = params.excludeDexes?.length
+    ? `\n        excludeDexes: ${JSON.stringify(params.excludeDexes)},`
+    : "";
+
+  if (options?.minimal) {
+    return `import { V1Client } from "@titanexchange/sdk-ts";
+import bs58 from "bs58";
+
+const client = await V1Client.connect("${wsUrl}?auth=${encodeURIComponent(jwt)}");
+const { stream } = await client.newSwapQuoteStream({
+  swap: {
+    inputMint: bs58.decode(${params.inputMint}),
+    outputMint: bs58.decode(${params.outputMint}),
+    amount: ${params.amount},
+    slippageBps: ${params.slippageBps},${dexLine}${excludeLine}
+  },
+  transaction: { userPublicKey: bs58.decode(${params.userPublicKey}) },
+  update: { intervalMs: ${params.intervalMs || 1000}, num_quotes: ${params.numQuotes || 3} },
+});
+
+const reader = stream.getReader();
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  const best = Object.entries(value.quotes)
+    .sort(([,a]: any, [,b]: any) => Number(b.outAmount) - Number(a.outAmount))[0];
+  console.log(\`Best: \${best[0]} -> \${best[1].outAmount}\`);
+}
+await client.close();`;
+  }
 
   return `import { V1Client } from "@titanexchange/sdk-ts";
 import bs58 from "bs58";
 
 // Helper to convert base58 string to Uint8Array (Pubkey)
-function pubkeyFromString(base58: string): Uint8Array {
-  return bs58.decode(base58);
+function pubkeyFromString(base58Str: string): Uint8Array {
+  return bs58.decode(base58Str);
 }
 
 async function swapExample() {
@@ -57,12 +87,12 @@ async function swapExample() {
     // Build swap quote request
     const swapRequest = {
       swap: {
-        inputMint: pubkeyFromString(${params.inputMint}),
-        outputMint: pubkeyFromString(${params.outputMint}),
+        inputMint: pubkeyFromString(${params.inputMint}),  // ${params.inputMint.replace(/"/g, "")}
+        outputMint: pubkeyFromString(${params.outputMint}),  // ${params.outputMint.replace(/"/g, "")}
         amount: ${params.amount},
         swapMode: "${params.swapMode}",
         slippageBps: ${params.slippageBps},
-        onlyDirectRoutes: ${params.onlyDirectRoutes},
+        onlyDirectRoutes: ${params.onlyDirectRoutes},${dexLine}${excludeLine}
       },
       transaction: {
         userPublicKey: pubkeyFromString(${params.userPublicKey}),
@@ -70,7 +100,7 @@ async function swapExample() {
       update: {
         intervalMs: ${params.intervalMs},
         num_quotes: ${params.numQuotes},
-      },` : ''}
+      },` : ""}
     };
 
     // Start swap quote stream
@@ -97,13 +127,7 @@ async function swapExample() {
         steps: quote.steps?.length || 0,
       }));
 
-      // Sort by best output
-      // Convert BigInt to Number for comparison
-      routes.sort((a, b) => {
-        const aOut = typeof a.outAmount === 'bigint' ? Number(a.outAmount) : a.outAmount;
-        const bOut = typeof b.outAmount === 'bigint' ? Number(b.outAmount) : b.outAmount;
-        return bOut - aOut;
-      });
+      routes.sort((a, b) => Number(b.outAmount) - Number(a.outAmount));
 
       console.log(\`Update \${count + 1}: \${routes.length} routes\`);
       console.log("Best route:", routes[0]);
@@ -111,13 +135,8 @@ async function swapExample() {
       count++;
     }
 
-    // Cancel stream reader
     await reader.cancel();
-
-    // Stop stream on server
     await client.stopStream(result.response.id);
-
-    // Close connection
     await client.close();
     console.log("Connection closed");
 
@@ -126,6 +145,5 @@ async function swapExample() {
   }
 }
 
-// Run the example
 swapExample();`;
 }

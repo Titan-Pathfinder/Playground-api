@@ -5,6 +5,7 @@ import { createTitanClient, isValidJWT } from "@/lib/titan/client";
 import { createNativeTitanClient } from "@/lib/titan/native-client";
 import type { TitanClient, ConnectionState, ClientMode } from "@/lib/titan/native-types";
 import { useLogStore } from "./use-log-store";
+import { useMetricsStore } from "./use-metrics-store";
 
 export function useTitanConnection() {
   const [connectionState, setConnectionState] = useState<ConnectionState>({
@@ -14,6 +15,7 @@ export function useTitanConnection() {
   const [clientMode, setClientMode] = useState<ClientMode>("native"); // Default to native
   const clientRef = useRef<TitanClient | null>(null);
   const addLog = useLogStore((state) => state.addLog);
+  const metricsStore = useMetricsStore();
 
   const connect = useCallback(
     async (jwt: string, wsUrl: string = "wss://v1.api.titan.ag") => {
@@ -61,6 +63,7 @@ export function useTitanConnection() {
 
         setServerInfo(info);
         setConnectionState({ status: "connected" });
+        metricsStore.setConnectedAt(Date.now());
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Connection failed";
         addLog({ type: "error", data: { action: "connect", error: errorMessage } });
@@ -87,7 +90,8 @@ export function useTitanConnection() {
     }
     setConnectionState({ status: "disconnected" });
     setServerInfo(null);
-  }, [addLog]);
+    metricsStore.setConnectedAt(null);
+  }, [addLog, metricsStore]);
 
   return {
     connectionState,

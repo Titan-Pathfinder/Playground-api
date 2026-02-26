@@ -17,26 +17,51 @@ export interface SwapFormParams {
   onlyDirectRoutes: boolean;
   intervalMs: number;
   numQuotes: number;
+  dexes?: string[];
+}
+
+export interface SwapFormInitialParams {
+  inputMint?: string;
+  outputMint?: string;
+  amount?: string;
+  userPublicKey?: string;
+  slippageBps?: string;
+  onlyDirectRoutes?: boolean;
+  intervalMs?: string;
+  numQuotes?: string;
+  dexFilter?: string;
 }
 
 interface SwapFormProps {
   onRequestChange: (params: SwapFormParams) => void;
   disabled?: boolean;
+  initialParams?: SwapFormInitialParams;
 }
 
-export function SwapForm({ onRequestChange, disabled }: SwapFormProps) {
-  const [inputMint, setInputMint] = useState<string>(COMMON_MINTS.SOL);
-  const [outputMint, setOutputMint] = useState<string>(COMMON_MINTS.USDC);
-  const [customInputMint, setCustomInputMint] = useState("");
-  const [customOutputMint, setCustomOutputMint] = useState("");
+export function SwapForm({ onRequestChange, disabled, initialParams }: SwapFormProps) {
+  const resolveInitialMint = (mint?: string, fallback: string = COMMON_MINTS.SOL) => {
+    if (!mint) return fallback;
+    if (Object.values(COMMON_MINTS).includes(mint as any)) return mint;
+    return "custom";
+  };
+
+  const [inputMint, setInputMint] = useState<string>(resolveInitialMint(initialParams?.inputMint, COMMON_MINTS.SOL));
+  const [outputMint, setOutputMint] = useState<string>(resolveInitialMint(initialParams?.outputMint, COMMON_MINTS.USDC));
+  const [customInputMint, setCustomInputMint] = useState(
+    initialParams?.inputMint && !Object.values(COMMON_MINTS).includes(initialParams.inputMint as any) ? initialParams.inputMint : ""
+  );
+  const [customOutputMint, setCustomOutputMint] = useState(
+    initialParams?.outputMint && !Object.values(COMMON_MINTS).includes(initialParams.outputMint as any) ? initialParams.outputMint : ""
+  );
   const [customInputDecimals, setCustomInputDecimals] = useState("9");
   const [customOutputDecimals, setCustomOutputDecimals] = useState("9");
-  const [uiAmount, setUiAmount] = useState("1"); // UI amount (e.g., 1 SOL)
-  const [userPublicKey, setUserPublicKey] = useState("GjphYQvBcDacc51fJFwk5Hf4X9JwN7SXpqw8vXfJk9gL");
-  const [slippageBps, setSlippageBps] = useState("50"); // 0.5%
-  const [onlyDirectRoutes, setOnlyDirectRoutes] = useState(false);
-  const [intervalMs, setIntervalMs] = useState("1000");
-  const [numQuotes, setNumQuotes] = useState("3");
+  const [uiAmount, setUiAmount] = useState(initialParams?.amount || "1");
+  const [userPublicKey, setUserPublicKey] = useState(initialParams?.userPublicKey || "GjphYQvBcDacc51fJFwk5Hf4X9JwN7SXpqw8vXfJk9gL");
+  const [slippageBps, setSlippageBps] = useState(initialParams?.slippageBps || "50");
+  const [onlyDirectRoutes, setOnlyDirectRoutes] = useState(initialParams?.onlyDirectRoutes || false);
+  const [intervalMs, setIntervalMs] = useState(initialParams?.intervalMs || "1000");
+  const [numQuotes, setNumQuotes] = useState(initialParams?.numQuotes || "3");
+  const [dexFilter, setDexFilter] = useState(initialParams?.dexFilter || "");
   const [copied, setCopied] = useState(false);
 
   // Update parent whenever form changes
@@ -50,6 +75,10 @@ export function SwapForm({ onRequestChange, disabled }: SwapFormProps) {
       : inputTokenInfo?.decimals || 9;
     const rawAmount = uiAmountToRaw(parseFloat(uiAmount) || 0, decimals);
 
+    const dexes = dexFilter.trim()
+      ? dexFilter.split(",").map((d) => d.trim()).filter(Boolean)
+      : undefined;
+
     const params: SwapFormParams = {
       inputMint: actualInputMint,
       outputMint: actualOutputMint,
@@ -59,6 +88,7 @@ export function SwapForm({ onRequestChange, disabled }: SwapFormProps) {
       onlyDirectRoutes,
       intervalMs: parseInt(intervalMs),
       numQuotes: parseInt(numQuotes),
+      dexes,
     };
     onRequestChange(params);
   };
@@ -75,6 +105,7 @@ export function SwapForm({ onRequestChange, disabled }: SwapFormProps) {
       onlyDirectRoutes,
       intervalMs,
       numQuotes,
+      dexFilter: dexFilter || undefined,
     };
     await navigator.clipboard.writeText(JSON.stringify(config, null, 2));
     setCopied(true);
@@ -116,6 +147,7 @@ export function SwapForm({ onRequestChange, disabled }: SwapFormProps) {
       setOnlyDirectRoutes(config.onlyDirectRoutes);
       setIntervalMs(config.intervalMs);
       setNumQuotes(config.numQuotes);
+      if (config.dexFilter) setDexFilter(config.dexFilter);
     } catch (e) {
       console.error("Failed to paste config:", e);
     }
@@ -138,6 +170,7 @@ export function SwapForm({ onRequestChange, disabled }: SwapFormProps) {
     onlyDirectRoutes,
     intervalMs,
     numQuotes,
+    dexFilter,
   ]);
 
   return (
@@ -385,6 +418,29 @@ export function SwapForm({ onRequestChange, disabled }: SwapFormProps) {
           <Label htmlFor="only-direct" className="text-sm font-normal cursor-pointer">
             Only direct routes
           </Label>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="dex-filter">
+            DEX Filter
+            <span className="ml-2 text-xs text-muted-foreground">
+              Comma-separated (e.g. Kdex, Raydium)
+            </span>
+          </Label>
+          <Input
+            id="dex-filter"
+            type="text"
+            placeholder="Leave empty for all DEXes"
+            value={dexFilter}
+            onChange={(e) => setDexFilter(e.target.value)}
+            disabled={disabled}
+            className="font-mono text-sm"
+          />
+          {dexFilter.trim() && (
+            <p className="text-xs text-muted-foreground">
+              Filtering to: {dexFilter.split(",").map((d) => d.trim()).filter(Boolean).join(", ")}
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

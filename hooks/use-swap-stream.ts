@@ -3,6 +3,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { TitanClient, SwapQuoteRequest } from "@/lib/titan/native-types";
 import { useLogStore } from "./use-log-store";
+import { useMetricsStore } from "./use-metrics-store";
+import { useComparisonStore } from "./use-comparison-store";
 
 interface SwapStreamState {
   isActive: boolean;
@@ -23,8 +25,11 @@ export function useSwapStream(client: TitanClient | null) {
   });
   const addLog = useLogStore((state) => state.addLog);
   const readerRef = useRef<ReadableStreamDefaultReader<any> | null>(null);
+  const lastReadTimeRef = useRef<number>(0);
 
   const clearLogs = useLogStore((state) => state.clearLogs);
+  const metricsStore = useMetricsStore();
+  const comparisonStore = useComparisonStore();
 
   const startStream = useCallback(
     async (request: SwapQuoteRequest) => {
@@ -80,11 +85,16 @@ export function useSwapStream(client: TitanClient | null) {
         const reader = result.stream.getReader();
         readerRef.current = reader;
 
+        metricsStore.setStreamStartedAt(Date.now());
+        lastReadTimeRef.current = Date.now();
+
         // Process stream data in background
         (async () => {
           try {
             while (true) {
+              const readStart = Date.now();
               const { done, value } = await reader.read();
+              const readEnd = Date.now();
 
               if (done) {
                 addLog({ type: "stream_end", data: { streamId } });
@@ -102,6 +112,14 @@ export function useSwapStream(client: TitanClient | null) {
 
               // value is SwapQuotes - contains quotes object keyed by provider name
               addLog({ type: "stream_data", data: value });
+
+              // Record metrics
+              const latencyMs = readEnd - lastReadTimeRef.current;
+              if (lastReadTimeRef.current > 0) {
+                metricsStore.recordLatency(latencyMs);
+              }
+              metricsStore.recordMessage();
+              lastReadTimeRef.current = readEnd;
 
               // DEBUG: Check if transaction field exists in any quote
               if (value.quotes && typeof value.quotes === 'object') {
@@ -181,6 +199,11 @@ export function useSwapStream(client: TitanClient | null) {
                               (typeof b.outAmount === 'string' ? parseFloat(b.outAmount) : b.outAmount);
                   return bOut - aOut;
                 });
+              }
+
+              // Record comparison data
+              if (value.quotes && typeof value.quotes === 'object') {
+                comparisonStore.recordUpdate(value.quotes);
               }
 
               setStreamState((prev) => ({
@@ -264,9 +287,10 @@ export function useSwapStream(client: TitanClient | null) {
         sequenceNumber: 0,
         contextSlot: 0,
       });
+      metricsStore.setStreamStartedAt(null);
       clearLogs(); // Clear all protocol logs
     }
-  }, [client, streamState.streamId, addLog, clearLogs]);
+  }, [client, streamState.streamId, addLog, clearLogs, metricsStore]);
 
   // Cleanup on unmount and handle SDK WebSocket close bug
   useEffect(() => {

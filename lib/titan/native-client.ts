@@ -8,6 +8,8 @@ import type {
   SwapQuoteRequest,
   SwapQuoteStreamResponse,
   SwapQuotes,
+  GetVenuesResponse,
+  ListProvidersResponse,
 } from "./native-types";
 
 /**
@@ -447,10 +449,50 @@ export class NativeTitanClient implements TitanClient {
   }
 
   /**
+   * Get available venues (DEXes/AMMs)
+   */
+  async getVenues(): Promise<GetVenuesResponse> {
+    try {
+      const response = await this.sendRequest<any>("GetVenues");
+      return response as GetVenuesResponse;
+    } catch {
+      return { venues: [] };
+    }
+  }
+
+  /**
+   * List available providers
+   */
+  async listProviders(): Promise<ListProvidersResponse> {
+    try {
+      const response = await this.sendRequest<any>("ListProviders");
+      return response as ListProvidersResponse;
+    } catch {
+      return { providers: [] };
+    }
+  }
+
+  /**
    * Stop an active stream
    */
   async stopStream(streamId: number): Promise<void> {
     await this.sendRequest("StopStream", { id: streamId });
+  }
+
+  /**
+   * Send a raw request (for API Explorer)
+   */
+  async sendRawRequest(method: string, params?: any): Promise<any> {
+    return this.sendRequest(method, params);
+  }
+
+  /**
+   * Encode a request to MessagePack bytes (for wire format inspection)
+   */
+  static encodeRequest(method: string, params?: any): Uint8Array {
+    const encoder = new Encoder({ useBigInt64: true });
+    const request = { id: 0, data: { [method]: params || {} } };
+    return encoder.encode(request);
   }
 
   /**

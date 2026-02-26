@@ -17,7 +17,6 @@ const WS_ENDPOINTS = [
   { value: "wss://jp1.api.demo.titan.exchange/api/v1/ws", label: "JP1 - Tokyo, Japan", group: "Demo" },
   { value: "wss://de1.api.demo.titan.exchange/api/v1/ws", label: "DE1 - Frankfurt, Germany", group: "Demo" },
   { value: "wss://us.partners.api.titan.exchange/api/v1/ws", label: "US - Partners", group: "Partners" },
-  { value: "wss://solana-solana-mainnet.sandbox.quiknode.net/2f568e4df78544629ce9af64bbe3cef9145895f5/api/v1/ws", label: "QuikNode - Mainnet", group: "QuikNode" },
   { value: "custom", label: "Custom WebSocket URL", group: "Custom" },
 ];
 
@@ -161,14 +160,6 @@ export function ConnectionPanel({ connectionState, serverInfo, clientMode, onCli
               <SelectGroup>
                 <SelectLabel>Partners</SelectLabel>
                 {WS_ENDPOINTS.filter(e => e.group === "Partners").map((endpoint) => (
-                  <SelectItem key={endpoint.value} value={endpoint.value}>
-                    {endpoint.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-              <SelectGroup>
-                <SelectLabel>QuikNode</SelectLabel>
-                {WS_ENDPOINTS.filter(e => e.group === "QuikNode").map((endpoint) => (
                   <SelectItem key={endpoint.value} value={endpoint.value}>
                     {endpoint.label}
                   </SelectItem>

@@ -1,14 +1,9 @@
 import type { SwapQuoteRequest } from "@/lib/titan/native-types";
 import bs58 from "bs58";
 
-/**
- * Serialize Uint8Array to base58 string for display
- */
 function serializeRequest(request: SwapQuoteRequest) {
   const encodeUint8Array = (arr: any): string => {
-    if (arr instanceof Uint8Array) {
-      return bs58.encode(arr);
-    }
+    if (arr instanceof Uint8Array) return bs58.encode(arr);
     return "";
   };
 
@@ -16,24 +11,64 @@ function serializeRequest(request: SwapQuoteRequest) {
     inputMint: encodeUint8Array(request.swap.inputMint),
     outputMint: encodeUint8Array(request.swap.outputMint),
     amount: request.swap.amount,
-    swapMode: request.swap.swapMode,
-    slippageBps: request.swap.slippageBps,
-    onlyDirectRoutes: request.swap.onlyDirectRoutes,
+    swapMode: request.swap.swapMode || "ExactIn",
+    slippageBps: request.swap.slippageBps ?? 50,
+    onlyDirectRoutes: request.swap.onlyDirectRoutes || false,
+    dexes: request.swap.dexes,
+    excludeDexes: request.swap.excludeDexes,
     userPublicKey: encodeUint8Array(request.transaction.userPublicKey),
     intervalMs: request.update?.intervalMs || 1000,
-    numQuotes: request.update?.num_quotes || 3,
+    numQuotes: request.update?.numQuotes || 3,
   };
 }
 
-/**
- * Generate Rust code snippet for the given swap configuration
- */
 export function generateRustSnippet(
   jwt: string,
   wsUrl: string,
-  request: SwapQuoteRequest
+  request: SwapQuoteRequest,
+  options?: { minimal?: boolean }
 ): string {
   const params = serializeRequest(request);
+
+  const dexesLine = params.dexes?.length
+    ? `Some(vec![${params.dexes.map((d) => `"${d}".to_string()`).join(", ")}])`
+    : "None";
+  const excludeLine = params.excludeDexes?.length
+    ? `Some(vec![${params.excludeDexes.map((d) => `"${d}".to_string()`).join(", ")}])`
+    : "None";
+
+  if (options?.minimal) {
+    return `use titan_sdk::{V1Client, SwapQuoteRequest, SwapParams, TransactionParams, QuoteUpdateParams};
+use solana_sdk::pubkey::Pubkey;
+use std::str::FromStr;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let mut client = V1Client::connect("${wsUrl}?auth=${jwt}").await?;
+    let mut stream = client.new_swap_quote_stream(SwapQuoteRequest {
+        swap: SwapParams {
+            input_mint: Pubkey::from_str("${params.inputMint}")?,
+            output_mint: Pubkey::from_str("${params.outputMint}")?,
+            amount: ${params.amount}, slippage_bps: ${params.slippageBps},
+            ..Default::default()
+        },
+        transaction: TransactionParams {
+            user_public_key: Pubkey::from_str("${params.userPublicKey}")?,
+            ..Default::default()
+        },
+        update: Some(QuoteUpdateParams { interval_ms: ${params.intervalMs}, num_quotes: ${params.numQuotes} }),
+    }).await?;
+
+    while let Some(Ok(quotes)) = stream.next().await {
+        let best = quotes.quotes.iter().max_by_key(|(_, q)| q.out_amount);
+        if let Some((provider, quote)) = best {
+            println!("{}: {}", provider, quote.out_amount);
+        }
+    }
+    client.close().await?;
+    Ok(())
+}`;
+  }
 
   return `use titan_sdk::{V1Client, SwapQuoteRequest, SwapParams, TransactionParams, QuoteUpdateParams};
 use solana_sdk::pubkey::Pubkey;
@@ -59,6 +94,8 @@ async fn main() -> Result<()> {
     );
 
     // Build swap quote request
+    // Input: ${params.inputMint}
+    // Output: ${params.outputMint}
     let swap_request = SwapQuoteRequest {
         swap: SwapParams {
             input_mint: Pubkey::from_str("${params.inputMint}")?,
@@ -67,8 +104,8 @@ async fn main() -> Result<()> {
             swap_mode: titan_sdk::SwapMode::${params.swapMode},
             slippage_bps: ${params.slippageBps},
             only_direct_routes: ${params.onlyDirectRoutes},
-            dexes: None,
-            exclude_dexes: None,
+            dexes: ${dexesLine},
+            exclude_dexes: ${excludeLine},
         },
         transaction: TransactionParams {
             user_public_key: Pubkey::from_str("${params.userPublicKey}")?,
@@ -92,13 +129,11 @@ async fn main() -> Result<()> {
     while count < ${params.numQuotes} {
         match stream.next().await {
             Some(Ok(quotes)) => {
-                // Transform quotes map to sorted vec
                 let mut routes: Vec<_> = quotes.quotes
                     .iter()
                     .map(|(provider, quote)| (provider, quote.out_amount))
                     .collect();
 
-                // Sort by best output
                 routes.sort_by(|a, b| b.1.cmp(&a.1));
 
                 println!("Update {}: {} routes", count + 1, routes.len());
@@ -119,10 +154,7 @@ async fn main() -> Result<()> {
         }
     }
 
-    // Stop stream
     stream.stop().await?;
-
-    // Close connection
     client.close().await?;
     println!("Connection closed");
 
