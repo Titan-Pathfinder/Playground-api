@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { COMMON_MINTS, getTokenInfo, uiAmountToRaw } from "@/lib/constants/mints";
+import { COMMON_MINTS, getTokenInfo, uiAmountToRaw, getTokenIcon } from "@/lib/constants/mints";
 import { Copy, Check, Upload } from "lucide-react";
 export interface SwapFormParams {
   inputMint: string;
@@ -206,23 +206,69 @@ export function SwapForm({ onRequestChange, disabled, initialParams }: SwapFormP
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="input-mint">Input Mint</Label>
+            <Label htmlFor="input-mint">Input Token</Label>
             <Select
               value={inputMint}
               onValueChange={setInputMint}
               disabled={disabled}
             >
-              <SelectTrigger id="input-mint">
-                <SelectValue />
+              <SelectTrigger id="input-mint" className="h-10">
+                <SelectValue>
+                  {inputMint && inputMint !== "custom" ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{getTokenIcon(inputMint)}</span>
+                      <span>{getTokenInfo(inputMint)?.symbol}</span>
+                    </div>
+                  ) : inputMint === "custom" ? (
+                    "Custom"
+                  ) : (
+                    "Select token..."
+                  )}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={COMMON_MINTS.SOL}>SOL</SelectItem>
-                <SelectItem value={COMMON_MINTS.USDC}>USDC</SelectItem>
-                <SelectItem value={COMMON_MINTS.USDT}>USDT</SelectItem>
-                <SelectItem value={COMMON_MINTS.BONK}>BONK</SelectItem>
-                <SelectItem value={COMMON_MINTS.JUP}>JUP</SelectItem>
-                <SelectItem value={COMMON_MINTS.WIF}>WIF</SelectItem>
-                <SelectItem value={COMMON_MINTS.ONYC}>ONyc</SelectItem>
+                <SelectItem value={COMMON_MINTS.SOL}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getTokenIcon(COMMON_MINTS.SOL)}</span>
+                    <span>SOL</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value={COMMON_MINTS.USDC}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getTokenIcon(COMMON_MINTS.USDC)}</span>
+                    <span>USDC</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value={COMMON_MINTS.USDT}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getTokenIcon(COMMON_MINTS.USDT)}</span>
+                    <span>USDT</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value={COMMON_MINTS.BONK}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getTokenIcon(COMMON_MINTS.BONK)}</span>
+                    <span>BONK</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value={COMMON_MINTS.JUP}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getTokenIcon(COMMON_MINTS.JUP)}</span>
+                    <span>JUP</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value={COMMON_MINTS.WIF}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getTokenIcon(COMMON_MINTS.WIF)}</span>
+                    <span>WIF</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value={COMMON_MINTS.ONYC}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getTokenIcon(COMMON_MINTS.ONYC)}</span>
+                    <span>ONyc</span>
+                  </div>
+                </SelectItem>
                 <SelectItem value="custom">Custom Token</SelectItem>
               </SelectContent>
             </Select>
@@ -257,23 +303,69 @@ export function SwapForm({ onRequestChange, disabled, initialParams }: SwapFormP
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="output-mint">Output Mint</Label>
+            <Label htmlFor="output-mint">Output Token</Label>
             <Select
               value={outputMint}
               onValueChange={setOutputMint}
               disabled={disabled}
             >
-              <SelectTrigger id="output-mint">
-                <SelectValue />
+              <SelectTrigger id="output-mint" className="h-10">
+                <SelectValue>
+                  {outputMint && outputMint !== "custom" ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{getTokenIcon(outputMint)}</span>
+                      <span>{getTokenInfo(outputMint)?.symbol}</span>
+                    </div>
+                  ) : outputMint === "custom" ? (
+                    "Custom"
+                  ) : (
+                    "Select token..."
+                  )}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={COMMON_MINTS.SOL}>SOL</SelectItem>
-                <SelectItem value={COMMON_MINTS.USDC}>USDC</SelectItem>
-                <SelectItem value={COMMON_MINTS.USDT}>USDT</SelectItem>
-                <SelectItem value={COMMON_MINTS.BONK}>BONK</SelectItem>
-                <SelectItem value={COMMON_MINTS.JUP}>JUP</SelectItem>
-                <SelectItem value={COMMON_MINTS.WIF}>WIF</SelectItem>
-                <SelectItem value={COMMON_MINTS.ONYC}>ONyc</SelectItem>
+                <SelectItem value={COMMON_MINTS.SOL}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getTokenIcon(COMMON_MINTS.SOL)}</span>
+                    <span>SOL</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value={COMMON_MINTS.USDC}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getTokenIcon(COMMON_MINTS.USDC)}</span>
+                    <span>USDC</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value={COMMON_MINTS.USDT}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getTokenIcon(COMMON_MINTS.USDT)}</span>
+                    <span>USDT</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value={COMMON_MINTS.BONK}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getTokenIcon(COMMON_MINTS.BONK)}</span>
+                    <span>BONK</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value={COMMON_MINTS.JUP}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getTokenIcon(COMMON_MINTS.JUP)}</span>
+                    <span>JUP</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value={COMMON_MINTS.WIF}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getTokenIcon(COMMON_MINTS.WIF)}</span>
+                    <span>WIF</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value={COMMON_MINTS.ONYC}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getTokenIcon(COMMON_MINTS.ONYC)}</span>
+                    <span>ONyc</span>
+                  </div>
+                </SelectItem>
                 <SelectItem value="custom">Custom Token</SelectItem>
               </SelectContent>
             </Select>

@@ -12,9 +12,7 @@ import { RawLogPanel } from "./components/raw-log-panel";
 import { MetricsPanel } from "./components/metrics-panel";
 import { VenuesExplorer } from "./components/venues-explorer";
 import { QuoteComparison } from "./components/quote-comparison";
-import { CodeGenerator } from "./components/code-generator";
 import { TxSimulator } from "./components/tx-simulator";
-import { WireFormatViewer } from "./components/wire-format-viewer";
 import { MultiStreamMonitor } from "./components/multi-stream-monitor";
 import { RawPlayground } from "./components/raw-playground";
 import { useTitanConnection } from "@/hooks/use-titan-connection";
@@ -55,10 +53,6 @@ function PlaygroundContent() {
   const [validationError, setValidationError] = useState<string>("");
   const [shareUrl, setShareUrl] = useState<string>("");
   const [shareCopied, setShareCopied] = useState(false);
-
-  // Connection panel state for code gen / share
-  const [connJwt, setConnJwt] = useState("");
-  const [connWsUrl, setConnWsUrl] = useState("wss://fra.api.titan-sol.tech/api/v1/ws");
 
   // Sync URL on form changes (replaceState, no navigation)
   useEffect(() => {
@@ -116,15 +110,6 @@ function PlaygroundContent() {
   };
 
   const isConnected = connectionState.status === "connected";
-
-  // Build request for code generator
-  const swapRequest = useMemo(() => {
-    try {
-      return buildSwapQuoteRequest(swapParams);
-    } catch {
-      return null;
-    }
-  }, [swapParams]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -248,68 +233,35 @@ function PlaygroundContent() {
                 outputMint={swapParams.outputMint}
                 onSelectRoute={handleSelectRoute}
               />
-              <RouteDetails
-                route={selectedRoute?.route}
-                routeIndex={selectedRoute?.index ?? 0}
-              />
+              {selectedRoute?.route && (
+                <RouteDetails
+                  route={selectedRoute.route}
+                  routeIndex={selectedRoute.index}
+                />
+              )}
             </div>
 
-            {/* Right Column - Tabbed Tools */}
+            {/* Right Column - Tools (Grouped into 3 tabs) */}
             <div className="space-y-6">
-              <Tabs defaultValue="inspector" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="inspector">Inspector</TabsTrigger>
-                  <TabsTrigger value="logs">Logs</TabsTrigger>
-                  <TabsTrigger value="venues">Venues</TabsTrigger>
-                  <TabsTrigger value="compare">Compare</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="inspector" className="mt-4">
-                  <TxInspector route={selectedRoute?.route} />
-                </TabsContent>
-
-                <TabsContent value="logs" className="mt-4">
-                  <RawLogPanel />
-                </TabsContent>
-
-                <TabsContent value="venues" className="mt-4">
-                  <VenuesExplorer client={client} isConnected={isConnected} />
-                </TabsContent>
-
-                <TabsContent value="compare" className="mt-4">
-                  <QuoteComparison />
-                </TabsContent>
-              </Tabs>
-
-              {/* Second row of tabs for more tools */}
-              <Tabs defaultValue="simulator" className="w-full">
+              <Tabs defaultValue="inspect" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="simulator">Simulator</TabsTrigger>
-                  <TabsTrigger value="wire">Wire</TabsTrigger>
-                  <TabsTrigger value="code">Code</TabsTrigger>
+                  <TabsTrigger value="inspect">Inspect</TabsTrigger>
+                  <TabsTrigger value="debug">Debug</TabsTrigger>
+                  <TabsTrigger value="analyze">Analyze</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="simulator" className="mt-4">
+                <TabsContent value="inspect" className="mt-4 space-y-4">
+                  <TxInspector route={selectedRoute?.route} />
                   <TxSimulator route={selectedRoute?.route} userPublicKey={swapParams.userPublicKey} />
                 </TabsContent>
 
-                <TabsContent value="wire" className="mt-4">
-                  <WireFormatViewer />
+                <TabsContent value="debug" className="mt-4 space-y-4">
+                  <RawLogPanel />
                 </TabsContent>
 
-                <TabsContent value="code" className="mt-4">
-                  {swapRequest && (
-                    <CodeGenerator
-                      jwt={connJwt}
-                      wsUrl={connWsUrl}
-                      request={swapRequest}
-                    />
-                  )}
-                  {!swapRequest && (
-                    <div className="text-center text-muted-foreground py-8 text-sm">
-                      Configure valid swap parameters to generate code
-                    </div>
-                  )}
+                <TabsContent value="analyze" className="mt-4 space-y-4">
+                  <QuoteComparison />
+                  <VenuesExplorer client={client} isConnected={isConnected} />
                 </TabsContent>
               </Tabs>
             </div>

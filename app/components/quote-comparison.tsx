@@ -103,23 +103,52 @@ export function QuoteComparison() {
 
         {/* Price difference matrix */}
         {providerList.length >= 2 && (
-          <div className="pt-2 border-t space-y-2">
-            <h4 className="text-xs font-semibold text-muted-foreground">Last Output Spread</h4>
-            <div className="space-y-1">
+          <div className="pt-3 border-t space-y-3">
+            <h4 className="text-xs font-semibold text-muted-foreground flex items-center gap-2">
+              <span>Price Spread Analysis</span>
+              <Badge variant="outline" className="text-[10px]">vs Best</Badge>
+            </h4>
+            <div className="space-y-2">
               {providerList.slice(1).map((provider) => {
                 const best = providerList[0];
                 const diff = best.lastOutAmount - provider.lastOutAmount;
-                const diffPct = best.lastOutAmount > 0 ? ((diff / best.lastOutAmount) * 100).toFixed(3) : "0";
+                const diffPct = best.lastOutAmount > 0 ? ((diff / best.lastOutAmount) * 100) : 0;
+                const severity = diffPct > 1 ? 'high' : diffPct > 0.5 ? 'medium' : 'low';
+                
                 return (
-                  <div key={provider.name} className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">
-                      {best.name} vs {provider.name}
-                    </span>
-                    <span className="font-mono text-green-600">+{diffPct}%</span>
+                  <div key={provider.name} className="flex items-center justify-between p-2 rounded bg-muted/20">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        severity === 'high' ? 'bg-red-500' : 
+                        severity === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                      }`} />
+                      <span className="text-xs text-muted-foreground">
+                        {best.name} vs {provider.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono">{diff.toLocaleString()}</span>
+                      <Badge 
+                        variant="outline" 
+                        className={`text-[10px] ${
+                          severity === 'high' ? 'border-red-500 text-red-600 bg-red-500/10' :
+                          severity === 'medium' ? 'border-yellow-500 text-yellow-600 bg-yellow-500/10' :
+                          'border-green-500 text-green-600 bg-green-500/10'
+                        }`}
+                      >
+                        +{diffPct.toFixed(3)}%
+                      </Badge>
+                    </div>
                   </div>
                 );
               })}
             </div>
+            
+            {providerList.length >= 3 && (
+              <div className="text-xs text-muted-foreground pt-1">
+                Best route saves you up to {((providerList[0].lastOutAmount - providerList[providerList.length - 1].lastOutAmount) / providerList[providerList.length - 1].lastOutAmount * 100).toFixed(3)}% vs worst
+              </div>
+            )}
           </div>
         )}
       </CardContent>

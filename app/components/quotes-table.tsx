@@ -79,6 +79,11 @@ export function QuotesTable({ routes, sequenceNumber, contextSlot, inputMint, ou
             const hops = route.marketInfos?.length || 0;
             const provider = route.provider || "Unknown";
 
+            // Calculate price delta from best route
+            const bestOutAmount = parseFloat(routes[0]?.outAmount || "0");
+            const currentOutAmount = parseFloat(route.outAmount || "0");
+            const priceDelta = isBest ? 0 : ((bestOutAmount - currentOutAmount) / bestOutAmount) * 100;
+
             // Provider badge colors
             const getProviderColor = (p: string) => {
               switch(p.toLowerCase()) {
@@ -90,6 +95,11 @@ export function QuotesTable({ routes, sequenceNumber, contextSlot, inputMint, ou
               }
             };
 
+            // Calculate effective price (input/output)
+            const effectivePrice = currentOutAmount > 0 
+              ? (parseFloat(route.inAmount) / currentOutAmount).toFixed(8)
+              : "0";
+
             return (
               <div
                 key={index}
@@ -99,7 +109,7 @@ export function QuotesTable({ routes, sequenceNumber, contextSlot, inputMint, ou
                   ${isBest ? "border-primary/50 bg-primary/5 shadow-primary/10" : "border-border/50 bg-card/30 hover:bg-card/50"}
                 `}
               >
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     {isBest && (
                       <Badge variant="default" className="bg-primary">
@@ -110,26 +120,37 @@ export function QuotesTable({ routes, sequenceNumber, contextSlot, inputMint, ou
                       {provider.toUpperCase()}
                     </Badge>
                     <Badge variant="outline" className="border-border/50">{hops} {hops === 1 ? "hop" : "hops"}</Badge>
+                    {!isBest && priceDelta > 0 && (
+                      <Badge variant="outline" className="border-red-500/30 text-red-600 bg-red-500/10">
+                        -{priceDelta.toFixed(2)}%
+                      </Badge>
+                    )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-3 gap-4 text-sm">
                   <div>
-                    <div className="text-muted-foreground">Input</div>
+                    <div className="text-muted-foreground text-xs">Input</div>
                     <div className="font-mono font-semibold">
                       {formatRawAmount(route.inAmount, inputDecimals)} {inputSymbol}
                     </div>
                   </div>
                   <div>
-                    <div className="text-muted-foreground">Output</div>
-                    <div className="font-mono font-semibold">
+                    <div className="text-muted-foreground text-xs">Output</div>
+                    <div className="font-mono font-semibold text-primary">
                       {formatRawAmount(route.outAmount, outputDecimals)} {outputSymbol}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground text-xs">Rate</div>
+                    <div className="font-mono text-xs">
+                      1 {outputSymbol} = {effectivePrice} {inputSymbol}
                     </div>
                   </div>
                 </div>
 
                 {route.marketInfos && route.marketInfos.length > 0 && (
-                  <div className="mt-2 pt-2 border-t">
+                  <div className="mt-3 pt-2 border-t">
                     <div className="flex gap-1 flex-wrap">
                       {route.marketInfos.map((market, mIdx) => (
                         <Badge key={mIdx} variant="secondary" className="text-xs">

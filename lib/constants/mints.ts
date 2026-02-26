@@ -25,6 +25,21 @@ export const TOKEN_INFO: Record<string, TokenInfo> = {
   [COMMON_MINTS.ONYC]: { symbol: "ONyc", decimals: 9, name: "ONyc" },
 };
 
+// Token icons (using emoji as fallback)
+export const TOKEN_ICONS: Record<string, string> = {
+  [COMMON_MINTS.SOL]: "◎",
+  [COMMON_MINTS.USDC]: "$",
+  [COMMON_MINTS.USDT]: "₮",
+  [COMMON_MINTS.BONK]: "🦴",
+  [COMMON_MINTS.JUP]: "🪐",
+  [COMMON_MINTS.WIF]: "🐕",
+  [COMMON_MINTS.ONYC]: "🗽",
+};
+
+export function getTokenIcon(mint: string): string {
+  return TOKEN_ICONS[mint] || "🪙";
+}
+
 export const MINT_LABELS: Record<string, string> = {
   [COMMON_MINTS.SOL]: "SOL",
   [COMMON_MINTS.USDC]: "USDC",
