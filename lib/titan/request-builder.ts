@@ -142,8 +142,8 @@ export function buildSwapQuoteRequest(params: {
   if (params.numQuotes) {
     request.update = {
       intervalMs: params.intervalMs || 1000,
-      num_quotes: params.numQuotes,  // Server expects snake_case
-    } as any;  // Type def says num_quotes but SDK example uses numQuotes - using snake_case to match type
+      numQuotes: params.numQuotes,
+    };
   }
 
   return request;
